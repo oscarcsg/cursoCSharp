@@ -4,6 +4,7 @@
     {
         static void Main(string[] args)
         {
+            /*
             // EJERCICIO 1
             Console.WriteLine("Ingrese su nombre: ");
             string? nombre = Console.ReadLine();
@@ -21,6 +22,28 @@
             Console.WriteLine("Escriba otro número: ");
             int num2 = int.Parse(Console.ReadLine());
             Console.WriteLine($"El número mayor es el {Math.Max(num1, num2)}");
+            */
+
+
+            // EJERCICIO 3
+            Console.WriteLine("Escriba un día de la semana (ej. lunes): ");
+            string? dia = Console.ReadLine().ToLower();
+            string[] finesSemana = { "sabado", "sábado", "domingo" };
+            if (dia != null)
+            {
+                bool flag = false;
+                foreach (string d in finesSemana)
+                {
+                    if (string.Equals(dia, d))
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (flag) Console.WriteLine("El día introducido SÍ es fin de semana.");
+                else Console.WriteLine("El dia introducido NO es fin de semana.");
+            }
         }
     }
 }
