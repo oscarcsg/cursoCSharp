@@ -10,41 +10,21 @@
             public NumeroException(string msg) : base(msg) { }
         }
 
-        // Enumeración de los niveles de dificultad
-        public enum Dificultad : byte
-        {
-            // Estos 3 primeros niveles son con números del 1 al 100
-            FACIL = 8,
-            NORMAL = 5,
-            DIFICIL = 3,
-
-            DIOS = 3 // Este nivel genererá numeros del 1 al 255
-        }
-
         static void Main(string[] args)
         {
             // Generar el número a encontrar
-            byte aleatorio = 0,
-                 intentosMax = 0,
-                 currentIntentos = 0,
-                 user = 0;
+            byte aleatorio = crearNumero();
 
-            Console.WriteLine("--- BIENVENIDO A ADIVINA EL NÚMERO. ---");
+            const byte INTENTOS = 5;
+            byte currentIntentos = 0;
 
-            // Solicitar al jugador la dificultad deseada y almacenarla
-            var difSelec = SolicitarDificultad();
-            // Sacar el # de intentos máximos dependiendo de la dificultad
-            intentosMax = (byte)difSelec;
-            // Generar el número a adivinar
-            aleatorio = crearNumero(difSelec);
+            byte user = 0;
 
-            if (difSelec == Dificultad.DIOS) Console.WriteLine("El número estará entre el 1 y el 255.\n");
-            else Console.WriteLine("El número estará entre el 1 y el 100.\n");
 
-            // BUCLE DE JUEGO
+            Console.WriteLine("--- BIENVENIDO A ADIVINA EL NÚMERO. ---\nAdivina el número entre el 1 y el 100.\n");
             do
             {
-                Console.Write($"Tiene {intentosMax - currentIntentos} intentos restantes.\nEscriba un número: ");
+                Console.Write($"Escriba un número: ");
 
                 try
                 {
@@ -62,7 +42,7 @@
 
                 currentIntentos++;
 
-                if (currentIntentos == intentosMax) break;
+                if (currentIntentos == INTENTOS) break;
 
                 // Mensajes de numero grande o pequeño
                 if (user > aleatorio) Console.WriteLine("El número es más pequeño.");
@@ -73,63 +53,21 @@
             // Esta comprobación no sería necesaria porque el bucle termina cuando el usuario ha acertado el número
             // pero la voy a hacer por robusted
             if (user == aleatorio) Console.WriteLine("¡¡¡ENHORABUENA!!! Has acertado el número.");
-            else Console.WriteLine($"\nHas perdido. El número era el {aleatorio}."); // Este mensaje (por ahora) no sería necesario
+            else Console.WriteLine($"Has perdido. El número era {aleatorio}."); // Este mensaje (por ahora) no sería necesario
         }
 
-        private static byte crearNumero(Dificultad dif)
+        private static byte crearNumero()
         {
             Random rand = new Random();
-            byte num = 0, range = 100;
-
-            if (dif == Dificultad.DIOS) range = byte.MaxValue;
+            byte num = 0;
 
             do
             {
                 num = (byte) rand.Next();
             }
-            while (num == 0 || num > range);
+            while (num == 0 || num > 100);
 
             return num;
-        }
-
-        private static Dificultad SolicitarDificultad()
-        {
-            bool flag = false;
-            byte opcion = 0;
-            do
-            {
-                Console.WriteLine("Seleccione la dificultad deseada:\n\t1.Fácil   2.Normal   3.Dificil   4.Dios");
-                try
-                {
-                    opcion = byte.Parse(Console.ReadLine());
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("El valor introducido debe ser un número del 1 al 4.");
-                    continue;
-                }
-
-                switch (opcion)
-                {
-                    case 1:
-                        return Dificultad.FACIL;
-
-                    case 2:
-                        return Dificultad.NORMAL;
-
-                    case 3:
-                        return Dificultad.DIFICIL;
-
-                    case 4:
-                        return Dificultad.DIOS;
-
-                    default:
-                        Console.WriteLine("El valor introducido no es válido, vuelva a intentarlo.");
-                        break;
-                }
-            }
-            while(!flag);
-            return Dificultad.NORMAL;
         }
     }
 }
