@@ -50,6 +50,16 @@
             {
                 if (i % 2 == 0) Console.WriteLine(i);
             }
+
+
+
+            // EJERCICIO 5
+            Console.WriteLine("\nIntroduzca cuántos números aleatorios quiere obtener: ");
+            int cantidad = int.Parse(Console.ReadLine());
+            int[] arr = new int[cantidad];
+            var rand = new Random();
+            for (int i = 0; i < cantidad; i++) arr[i] = rand.Next();
+            Console.WriteLine(string.Join(", ", arr));
         }
     }
 }
