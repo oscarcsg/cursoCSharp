@@ -71,7 +71,7 @@ namespace SlotMachine_Ejercicio3_
                     // Por defecto está seleccionada la opcion de cambiar tragaperras
                     int opcionSeleccionada = 2;
                     Maquina? maquinaSeleccionada = null;
-                    Jugador? jugador = null;
+                    Jugador? jugador = new("", 0);
 
                     while (jugando)
                     {
@@ -100,7 +100,7 @@ namespace SlotMachine_Ejercicio3_
                                 .Expand());
 
                         view["Datos"].Update(
-                            new Panel("Jugador: \nSaldo: ")
+                            new Panel($"Jugador: {jugador._Nombre}\nSaldo: {jugador._Saldo}")
                                 .Header("Estadísticas")
                                 .Border(BoxBorder.Rounded)
                                 .Expand());
@@ -147,7 +147,7 @@ namespace SlotMachine_Ejercicio3_
 
                                 // Cambiar de jugador
                                 case 2:
-                                    jugador = CambiarJugador(view);
+                                    jugador = CambiarJugador(view, ctx);
                                     break;
 
                                 // Salir del juego
@@ -224,19 +224,59 @@ namespace SlotMachine_Ejercicio3_
             return maquinaSeleccionada;
         }
 
-        private static Jugador? CambiarJugador(Layout view)
+        private static Jugador? CambiarJugador(Layout view, LiveDisplayContext ctx)
         {
             // Valor para saber cuál de las máquinas está seleccionada por el jugador
             int opcionSeleccionada = 0;
             bool flag = false;
-            Jugador? jugador = null;
+
+            string? nombre = null;
+            string? saldoStr = "10";
+            int saldo = 10;
+
+            string? msg = null;
+            bool isNombre = false;
 
             while (!flag)
             {
+                if (!isNombre) msg = $"Escribe tu nombre de jugador (enter para enviar):\n{nombre}";
+                else msg = $"Escribe cuánto saldo quieres tener: {saldo}";
 
+                view["Maquina"].Update(
+                    new Panel(new Align(new Markup(msg), HorizontalAlignment.Center, VerticalAlignment.Top))
+                        .Border(BoxBorder.Rounded)
+                        .Expand());
+
+                ctx.Refresh();
+
+                var tecla = Console.ReadKey(intercept: true);
+                var key = tecla.Key;
+                char c = tecla.KeyChar;
+
+                if (key == ConsoleKey.Backspace && nombre.Length > 0) nombre = nombre.Remove(nombre.Length - 1);
+                else if (char.IsDigit(c) || char.IsLetter(c))
+                {
+                    if (!isNombre) nombre += c;
+                    else if (char.IsDigit(c))
+                    {
+                        saldoStr += c;
+                        saldo = int.Parse(saldoStr);
+                    }
+                }
+                else if (key == ConsoleKey.Enter)
+                {
+                    if (!isNombre)
+                    {
+                        if (!string.IsNullOrEmpty(nombre)) isNombre = true;
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(saldoStr)) flag = true;
+                    }
+                }
             }
 
-            return jugador;
+            return new Jugador(nombre, int.Parse(saldoStr));
         }
         #endregion
     }
