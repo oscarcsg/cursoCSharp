@@ -253,7 +253,16 @@ namespace SlotMachine_Ejercicio3_
                 var key = tecla.Key;
                 char c = tecla.KeyChar;
 
-                if (key == ConsoleKey.Backspace && nombre.Length > 0) nombre = nombre.Remove(nombre.Length - 1);
+                if (key == ConsoleKey.Backspace && nombre.Length > 0 && saldoStr.Length > 0)
+                {
+                    if (!isNombre) nombre = nombre.Remove(nombre.Length - 1);
+                    else
+                    {
+                        saldoStr = saldoStr.Remove(saldoStr.Length - 1);
+                        if (saldoStr.Length == 0) saldo = 0;
+                        else saldo = int.Parse(saldoStr);
+                    }
+                }
                 else if (char.IsDigit(c) || char.IsLetter(c))
                 {
                     if (!isNombre) nombre += c;
