@@ -1,18 +1,243 @@
-﻿namespace SlotMachine_Ejercicio3_
+﻿using Spectre.Console;
+using System.ComponentModel.Design;
+using System.Reflection.Emit;
+using System.Text;
+
+namespace SlotMachine_Ejercicio3_
 {
     internal class Program
     {
+        #region Atributos
+        private const int WIDTH = 100;
+
+        // Máquinas
+        private static Maquina[] maquinas =
+        {
+            new Maquina("👑 Los tres reyes 👑"),
+            new Maquina("♠ Los cinco naipes ♠")
+        };
+        #endregion
+
+        #region MAIN
         static void Main(string[] args)
         {
-            Jugador j = new Jugador("Oscar", 100);
-            var maq = new Maquina("Máquina 1");
+            Console.OutputEncoding = Encoding.UTF8;
 
-            for (byte i = 0; i < 5; i++)
+            var view = new Layout("Base")
+                .SplitRows(
+                    new Layout("Cabecera").Size(3),
+                    new Layout("Cuerpo").Size(14).SplitColumns(
+                        new Layout("Maquina").Ratio(6),
+                        new Layout("Estadisticas").Ratio(4).SplitRows(
+                            new Layout("Datos"),
+                            new Layout("Decisiones")
+                        )
+                    ),
+                    new Layout("Pie").Size(3)
+                );
+
+            // HEADER
+            view["Cabecera"].Update(
+                new Panel(new Align(new Markup("[bold gold1] 🎰 CASINO NUEVO MÁLAGA 🎰 [/]"), HorizontalAlignment.Center))
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Gold1)
+                );
+
+            // FOOTER
+            view["Pie"].Update(
+                new Panel(new Align(new Markup("Texto Prueba"), HorizontalAlignment.Left))
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Gold1)
+                    .Padding(2, 0 ,2, 0)
+                );
+
+            view["Maquina"].Update(new Panel("").Expand());
+            view["Datos"].Update(new Panel("").Expand());
+            view["Decisiones"].Update(new Panel("").Expand());
+
+            AnsiConsole.AlternateScreen(() =>
             {
-                Console.WriteLine();
-                maq.Play(j);
-                Console.WriteLine($"Jugador: {j._Saldo}; Máquina: {maq._Monedas}");
-            }
+                AnsiConsole.Live(view)
+                .Start(ctx =>
+                {
+                    bool jugando = true;
+
+                    string[] opciones = {
+                        "🔀 Cambiar de tragaperras",
+                        "🎰 Tirar de la palanca",
+                        "👤 Cambiar de Jugador",
+                        "🚪 Salir del Casino"
+                    };
+                    // Por defecto está seleccionada la opcion de cambiar tragaperras
+                    int opcionSeleccionada = 2;
+                    Maquina? maquinaSeleccionada = null;
+                    Jugador? jugador = null;
+
+                    while (jugando)
+                    {
+                        // Crear el texto para el menú con las opciones anteriores
+                        var lineasMenu = new List<string>();
+                        for (int i = 0; i < opciones.Length; i++)
+                        {
+                            if (i == opcionSeleccionada)
+                            {
+                                // Si es la opción actual, se recalca con un fondo blanco y un >
+                                lineasMenu.Add($"[black on white] > {opciones[i]} [/]");
+                            }
+                            else
+                            {
+                                // Si no, simplemente texto plano
+                                lineasMenu.Add($"   {opciones[i]}");
+                            }
+                        }
+                        string textoMenu = string.Join("\n", lineasMenu);
+
+                        // Actualizar los paneles
+                        view["Decisiones"].Update(
+                            new Panel(textoMenu)
+                                .Header("Acciones (Usa las flechas y ENTER)")
+                                .Border(BoxBorder.Rounded)
+                                .Expand());
+
+                        view["Datos"].Update(
+                            new Panel("Jugador: \nSaldo: ")
+                                .Header("Estadísticas")
+                                .Border(BoxBorder.Rounded)
+                                .Expand());
+
+                        view["Maquina"].Update(
+                            new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
+                                .Border(BoxBorder.Rounded)
+                                .Expand()
+                                );
+
+                        // Refrescar la ventana para mostrar los cambios
+                        ctx.Refresh();
+
+                        // Lectura de tecla para saber qué acción hacer
+                        var tecla = Console.ReadKey(intercept: true).Key;
+
+                        if (tecla == ConsoleKey.UpArrow)
+                        {
+                            // Subir en el menú sin pasar del 0
+                            if (opcionSeleccionada > 0) opcionSeleccionada--;
+                        }
+                        else if (tecla == ConsoleKey.DownArrow)
+                        {
+                            // Bajar en el menú, sin pasar del límite de opciones
+                            if (opcionSeleccionada < opciones.Length - 1) opcionSeleccionada++;
+                        }
+                        else if (tecla == ConsoleKey.Enter)
+                        {
+                            // Evaluar qué opciés es la que está marcada cuando se pulsó enter
+                            switch (opcionSeleccionada)
+                            {
+                                // Cambiar de máquina
+                                case 0:
+                                    // Guardar la máquina seleccionada con la que jugar
+                                    maquinaSeleccionada = CambiarMaquina(view, ctx);
+                                    break;
+
+                                // Tirar de la palanca
+                                case 1:
+                                    view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
+                                    ctx.Refresh();
+                                    Thread.Sleep(1000); // SIMULAR POR AHORA
+                                    break;
+
+                                // Cambiar de jugador
+                                case 2:
+                                    jugador = CambiarJugador(view);
+                                    break;
+
+                                // Salir del juego
+                                case 3:
+                                    jugando = false;
+                                    break;
+                            }
+                        }
+                    }
+                });
+            });
         }
+        #endregion
+
+
+
+        #region Métodos
+        private static Maquina? CambiarMaquina(Layout view, LiveDisplayContext ctx)
+        {
+            // Valor para saber cuál de las máquinas está seleccionada por el jugador
+            int opcionSeleccionada = 0;
+            bool flag = false;
+            Maquina? maquinaSeleccionada = null;
+
+            while (!flag)
+            {
+                // Texto con todas las máquinas
+                var lineasMaquinas = new List<string>();
+                lineasMaquinas.Add("[yellow]¿A qué máquina quieres jugar?[/]\n");
+                for (int i = 0; i < maquinas.Length; i++)
+                {
+                    if (i == opcionSeleccionada)
+                    {
+                        // Si es la opción actual, se recalca con un fondo blanco y un >
+                        lineasMaquinas.Add($"[black on white] > {maquinas[i]._Nombre} [/]");
+                    }
+                    else
+                    {
+                        // Si no, texto plano
+                        lineasMaquinas.Add($"   {maquinas[i]._Nombre}");
+                    }
+                }
+
+                string maquinasTxt = string.Join("\n", lineasMaquinas);
+
+                // Cambiar el panel para mostrar las máquinas que se pueden seleccionar
+                view["Maquina"].Update(
+                    new Panel(new Align(new Markup(maquinasTxt), HorizontalAlignment.Center, VerticalAlignment.Top))
+                        .Border(BoxBorder.Rounded)
+                        .Expand());
+
+                ctx.Refresh();
+
+                var tecla = Console.ReadKey(intercept: true).Key;
+
+                if (tecla == ConsoleKey.UpArrow)
+                {
+                    // Subir en el panel (las máquinas) sin pasar de 0
+                    if (opcionSeleccionada > 0) opcionSeleccionada--;
+                }
+                else if (tecla == ConsoleKey.DownArrow)
+                {
+                    // Bajar en el panel, siempre dentro de las opciones de las maquinas
+                    if (opcionSeleccionada < maquinas.Length - 1) opcionSeleccionada++;
+                }
+                else if (tecla == ConsoleKey.Enter)
+                {
+                    flag = true;
+                    // Seleccionar la máquina actual
+                    maquinaSeleccionada = maquinas[opcionSeleccionada];
+                }
+            }
+            // Devolver la máquina seleccionada
+            return maquinaSeleccionada;
+        }
+
+        private static Jugador? CambiarJugador(Layout view)
+        {
+            // Valor para saber cuál de las máquinas está seleccionada por el jugador
+            int opcionSeleccionada = 0;
+            bool flag = false;
+            Jugador? jugador = null;
+
+            while (!flag)
+            {
+
+            }
+
+            return jugador;
+        }
+        #endregion
     }
 }
