@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-
-namespace SlotMachine_Ejercicio3_
+﻿namespace SlotMachine_Ejercicio3_
 {
     public static class RandomExtension
     {

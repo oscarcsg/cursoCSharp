@@ -1,5 +1,4 @@
 ﻿using Spectre.Console;
-using System.Reflection.Emit;
 using System.Text;
 
 namespace SlotMachine_Ejercicio3_
@@ -30,13 +29,14 @@ namespace SlotMachine_Ejercicio3_
                     new Layout("Pie").Size(3)
                 );
 
-        private static LiveDisplayContext ctx;
+        private static LiveDisplayContext? ctx;
         #endregion
 
         #region MAIN
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+            Console.Clear();
 
             // HEADER
             view["Cabecera"].Update(
@@ -57,97 +57,92 @@ namespace SlotMachine_Ejercicio3_
             view["Datos"].Update(new Panel("").Expand());
             view["Decisiones"].Update(new Panel("").Expand());
 
-            AnsiConsole.AlternateScreen(() =>
-            {
-                AnsiConsole.Live(view)
-                .Start(context =>
-                {
-                    ctx = context;
-                    bool jugando = true;
-
-                    string[] opciones = {
-                        "🔀 Cambiar de tragaperras",
-                        "🎰 Tirar de la palanca",
-                        "💰 Aumentar saldo",
-                        "👤 Cambiar de jugador",
-                        "🚪 Salir del Casino"
-                    };
-                    // Por defecto está seleccionada la opcion de cambiar tragaperras
-                    int opcionSeleccionada = 3;
-                    Maquina? maquinaSeleccionada = new("", EMaquina.TRI_SLOT);
-                    Jugador? jugador = null;
-
-
-
-                    // --------------------------------- //
-                    //           BUCLE DE JUEGO          //
-                    // --------------------------------- //
-                    while (jugando)
+            await AnsiConsole.Live(view)
+                    .StartAsync(async context =>
                     {
-                        // Actualizar los paneles
-                        ConfigurarPanelDecisiones(opciones, opcionSeleccionada);
+                        ctx = context;
+                        bool jugando = true, girarLibre = true;
+
+                        string[] opciones = {
+                            "🔀 Cambiar de tragaperras",
+                            "🎰 Tirar de la palanca",
+                            "💰 Aumentar saldo",
+                            "👤 Cambiar de jugador",
+                            "🚪 Salir del Casino"
+                        };
+                        // Por defecto está seleccionada la opcion de cambiar tragaperras
+                        int opcionSeleccionada = 3;
+                        Maquina? maquinaSeleccionada = null;
+                        Jugador? jugador = null;
+
+
+
+                        // --------------------------------- //
+                        //           BUCLE DE JUEGO          //
+                        // --------------------------------- //
+                        while (jugando)
+                        {
+                            // Actualizar los paneles
+                            ConfigurarPanelDecisiones(opciones, opcionSeleccionada);
                         
-                        ConfigurarPanelDatos(maquinaSeleccionada, jugador);
+                            ConfigurarPanelDatos(maquinaSeleccionada, jugador);
 
-                        ConfigurarPanelMaquina();
+                            ConfigurarPanelMaquina();
 
-                        // Refrescar la ventana para mostrar los cambios
-                        ctx.Refresh();
+                            // Refrescar la ventana para mostrar los cambios
+                            ctx.Refresh();
 
-                        // Lectura de tecla para saber qué acción hacer
-                        var tecla = Console.ReadKey(intercept: true).Key;
+                            // Lectura de tecla para saber qué acción hacer
+                            var tecla = Console.ReadKey(intercept: true).Key;
 
-                        if (tecla == ConsoleKey.UpArrow)
-                        {
-                            // Subir en el menú sin pasar del 0
-                            if (opcionSeleccionada > 0) opcionSeleccionada--;
-                        }
-                        else if (tecla == ConsoleKey.DownArrow)
-                        {
-                            // Bajar en el menú, sin pasar del límite de opciones
-                            if (opcionSeleccionada < opciones.Length - 1) opcionSeleccionada++;
-                        }
-                        else if (tecla == ConsoleKey.Enter)
-                        {
-                            // Evaluar qué opciés es la que está marcada cuando se pulsó enter
-                            switch (opcionSeleccionada)
+                            if (tecla == ConsoleKey.UpArrow)
                             {
-                                // Cambiar de máquina
-                                case 0:
-                                    // Guardar la máquina seleccionada con la que jugar
-                                    maquinaSeleccionada = CambiarMaquina();
-                                    break;
+                                // Subir en el menú sin pasar del 0
+                                if (opcionSeleccionada > 0) opcionSeleccionada--;
+                            }
+                            else if (tecla == ConsoleKey.DownArrow)
+                            {
+                                // Bajar en el menú, sin pasar del límite de opciones
+                                if (opcionSeleccionada < opciones.Length - 1) opcionSeleccionada++;
+                            }
+                            else if (tecla == ConsoleKey.Spacebar)
+                            {
+                                _ = TirarPalanca(girarLibre, jugador, maquinaSeleccionada);
+                            }
+                            else if (tecla == ConsoleKey.Enter)
+                            {
+                                // Evaluar qué opciés es la que está marcada cuando se pulsó enter
+                                switch (opcionSeleccionada)
+                                {
+                                    // Cambiar de máquina
+                                    case 0:
+                                        // Guardar la máquina seleccionada con la que jugar
+                                        maquinaSeleccionada = CambiarMaquina();
+                                        break;
 
-                                // Tirar de la palanca
-                                case 1:
-                                    if (jugador == null) ShowMessageFooter("");
-                                    else if (maquinaSeleccionada == null) ShowMessageFooter("");
+                                    // Tirar de la palanca
+                                    case 1:
+                                        _ = TirarPalanca(girarLibre, jugador, maquinaSeleccionada);
+                                        break;
 
-                                    view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
-                                    ctx.Refresh();
-                                    Thread.Sleep(1000); // SIMULAR POR AHORA
-                                    maquinaSeleccionada.Play(jugador);
-                                    break;
+                                    // Añadir saldo
+                                    case 2:
+                                        await AnadirSaldo(jugador);
+                                        break;
 
-                                // Añadir saldo
-                                case 2:
-                                    AnadirSaldo(jugador);
-                                    break;
+                                    // Cambiar de jugador
+                                    case 3:
+                                        jugador = CambiarJugador();
+                                        break;
 
-                                // Cambiar de jugador
-                                case 3:
-                                    jugador = CambiarJugador();
-                                    break;
-
-                                // Salir del juego
-                                case 4:
-                                    jugando = false;
-                                    break;
+                                    // Salir del juego
+                                    case 4:
+                                        jugando = false;
+                                        break;
+                                }
                             }
                         }
-                    }
-                });
-            });
+                    });
         }
         #endregion
 
@@ -274,11 +269,11 @@ namespace SlotMachine_Ejercicio3_
             return new Jugador(nombre, int.Parse(saldoStr));
         }
 
-        private static void AnadirSaldo(Jugador? jugador)
+        private static async Task AnadirSaldo(Jugador? jugador)
         {
             if (jugador == null)
             {
-                ShowMessageFooter(":warning:  No hay un jugador registrado actualmente.");
+                _ = ShowMessageFooter(":warning:  No hay un jugador registrado actualmente.");
                 return;
             }
 
@@ -401,17 +396,38 @@ namespace SlotMachine_Ejercicio3_
         private static void ConfigurarPanelMaquina()
         {
             view["Maquina"].Update(
-                new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
+                new Panel(new Align(new Markup("Seleccione una acción\nO pulse 'Espacio' para tirar rápidamente"), HorizontalAlignment.Center, VerticalAlignment.Top))
                     .Border(BoxBorder.Rounded)
                     .Expand());
+        }
+
+        private static async Task TirarPalanca(bool girarLibre, Jugador jugador, Maquina maquinaSeleccionada)
+        {
+            if (!girarLibre)
+            {
+                return;
+            }
+            else if (jugador == null)
+            {
+                _ = ShowMessageFooter(":warning:  No hay un jugador registrado actualmente.");
+                return;
+            }
+            else if (maquinaSeleccionada == null)
+            {
+                _ = ShowMessageFooter(":warning:  Debe seleccionar una máquina primero.");
+                return;
+            }
+
+            girarLibre = false;
+            view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
+            ctx.Refresh();
+            girarLibre = await maquinaSeleccionada.Play(jugador);
         }
         #endregion
 
         #region Métodos de Utilidad
-        private static void ShowMessageFooter(string? msg)
+        public static async Task<bool> ShowMessageFooter(string? msg)
         {
-            bool flag = false;
-
             if (string.IsNullOrEmpty(msg)) throw new ArgumentNullException("El mensaje no puede ser nulo o estar vacío.");
 
             for (byte i = 1; i <= 2; i++)
@@ -428,8 +444,10 @@ namespace SlotMachine_Ejercicio3_
                 ctx.Refresh();
 
                 // Solo ejecutar la parada en la primera vuelta (en la que muestra el mensaje enviado)
-                if (i != 2) Thread.Sleep(3000); // 3 segundos
+                if (i != 2) await Task.Delay(3000); // 3 segundos
             }
+
+            return true;
         }
         #endregion
     }

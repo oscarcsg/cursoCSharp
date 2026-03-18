@@ -45,12 +45,13 @@ namespace SlotMachine_Ejercicio3_
 
 
         #region Métodos
-        public void Play(Jugador player)
+        public async Task<bool> Play(Jugador player)
         {
             byte size = (byte)this._Slots;
             byte count = 0;
 
-            RecalcularSaldo(player, size, false); // Retirar las monedas del precio de la máquina
+            if (player._Saldo >= size) RecalcularSaldo(player, size, false); // Retirar las monedas del precio de la máquina
+            else return await Program.ShowMessageFooter("💸 No tienes saldo suficiente.");
 
             // Tirar suerte
             for (byte i = 0; i < size; i++)
@@ -61,13 +62,10 @@ namespace SlotMachine_Ejercicio3_
             if (count == size || count == 0)
             {
                 byte monedas = CalcularMonedas();
-                Console.WriteLine($"¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas.");
                 RecalcularSaldo(player, monedas, true); // Ingresas las ganancias (el precio de la máquina más los intereses
+                return await Program.ShowMessageFooter($"💰 ¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas 💰");
             }
-            else
-            {
-                Console.WriteLine($"Lo sentimos, ha perdido {size} monedas");
-            }
+            else return await Program.ShowMessageFooter($"Lo sentimos, ha perdido {size} monedas");
         }
 
         private byte CalcularMonedas()

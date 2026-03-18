@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SlotMachine_Ejercicio3_
+﻿namespace SlotMachine_Ejercicio3_
 {
     public class Jugador
     {
