@@ -64,13 +64,14 @@ namespace SlotMachine_Ejercicio3_
                     string[] opciones = {
                         "🔀 Cambiar de tragaperras",
                         "🎰 Tirar de la palanca",
-                        "👤 Cambiar de Jugador",
+                        "💰 Aumentar saldo",
+                        "👤 Cambiar de jugador",
                         "🚪 Salir del Casino"
                     };
                     // Por defecto está seleccionada la opcion de cambiar tragaperras
-                    int opcionSeleccionada = 2;
+                    int opcionSeleccionada = 3;
                     Maquina? maquinaSeleccionada = new("", EMaquina.TRI_SLOT);
-                    Jugador? jugador = new("", 0);
+                    Jugador? jugador = null;
 
 
 
@@ -120,13 +121,18 @@ namespace SlotMachine_Ejercicio3_
                                     Thread.Sleep(1000); // SIMULAR POR AHORA
                                     break;
 
-                                // Cambiar de jugador
+                                // Añadir saldo
                                 case 2:
+                                    AnadirSaldo(view, ctx, jugador);
+                                    break;
+
+                                // Cambiar de jugador
+                                case 3:
                                     jugador = CambiarJugador(view, ctx);
                                     break;
 
                                 // Salir del juego
-                                case 3:
+                                case 4:
                                     jugando = false;
                                     break;
                             }
@@ -201,19 +207,16 @@ namespace SlotMachine_Ejercicio3_
 
         private static Jugador? CambiarJugador(Layout view, LiveDisplayContext ctx)
         {
-            // Valor para saber cuál de las máquinas está seleccionada por el jugador
-            int opcionSeleccionada = 0;
             bool flag = false;
 
             string? nombre = null;
             string? saldoStr = "10";
             int saldo = 10;
-
-            string? msg = null;
             bool isNombre = false;
 
             while (!flag)
             {
+                string msg;
                 if (!isNombre) msg = $"Escribe tu nombre de jugador (enter para enviar):\n{nombre}";
                 else msg = $"Escribe cuánto saldo quieres tener: {saldo}";
 
@@ -238,15 +241,6 @@ namespace SlotMachine_Ejercicio3_
                         else saldo = int.Parse(saldoStr);
                     }
                 }
-                else if (char.IsDigit(c) || char.IsLetter(c))
-                {
-                    if (!isNombre) nombre += c;
-                    else if (char.IsDigit(c))
-                    {
-                        saldoStr += c;
-                        saldo = int.Parse(saldoStr);
-                    }
-                }
                 else if (key == ConsoleKey.Enter)
                 {
                     if (!isNombre)
@@ -258,9 +252,82 @@ namespace SlotMachine_Ejercicio3_
                         if (!string.IsNullOrEmpty(saldoStr)) flag = true;
                     }
                 }
+                else if (char.IsDigit(c) || char.IsLetter(c))
+                {
+                    if (!isNombre) nombre += c;
+                    else if (char.IsDigit(c))
+                    {
+                        saldoStr += c;
+                        saldo = int.Parse(saldoStr);
+                    }
+                }
             }
 
             return new Jugador(nombre, int.Parse(saldoStr));
+        }
+
+        private static void AnadirSaldo(Layout view, LiveDisplayContext ctx, Jugador? jugador)
+        {
+            if (jugador == null)
+            {
+                ShowMessageFooter(view, ctx, ":warning:  No hay un jugador registrado actualmente.");
+                return;
+            }
+
+            bool flag = false,
+                 good = true;
+
+            int monedas = jugador._Saldo;
+            string monedasStr = "0";
+
+            while (!flag)
+            {
+                string msg;
+                if (good) msg = $"¿Cuánto dinero quiere meter en su cuenta?\nCantidad: {monedasStr} monedas";
+                else msg = $"No es posible, pruebe con otra cantidad.\nCantidad: {monedasStr} monedas";
+
+                view["Maquina"].Update(
+                    new Panel(new Align(new Markup(msg), HorizontalAlignment.Center, VerticalAlignment.Top))
+                        .Border(BoxBorder.Rounded)
+                        .Expand());
+
+                ctx.Refresh();
+
+                var tecla = Console.ReadKey(intercept: true);
+                var key = tecla.Key;
+                var c = tecla.KeyChar;
+
+                if (key == ConsoleKey.Backspace && monedasStr.Length > 0)
+                {
+                    monedasStr = monedasStr.Remove(monedasStr.Length -1);
+                }
+                else if (key == ConsoleKey.Enter) {
+                    if (!string.IsNullOrEmpty(monedasStr) && int.Parse(monedasStr) > 0)
+                    {
+                        flag = true;
+                        monedas += int.Parse(monedasStr);
+                    }
+                }
+                else if (char.IsDigit(c))
+                {
+                    if (monedasStr.IndexOf("0") == 0)
+                    {
+                        monedasStr = "";
+                    }
+                    monedasStr += c;
+                    try
+                    {
+                        int temp = int.Parse(monedasStr);
+                    }
+                    catch
+                    {
+                        monedasStr = "2147483647";
+                        monedas = int.MaxValue;
+                    }
+                }
+            }
+
+            jugador?._Saldo = monedas;
         }
 
         private static void ConfigurarPanelDatos(Layout view, Maquina maquinaActual, Jugador jugadorActual)
@@ -329,6 +396,22 @@ namespace SlotMachine_Ejercicio3_
                 new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
                     .Border(BoxBorder.Rounded)
                     .Expand());
+        }
+        #endregion
+
+        #region Métodos de Utilidad
+        private static void ShowMessageFooter(Layout view, LiveDisplayContext ctx, string? msg)
+        {
+            if (string.IsNullOrEmpty(msg)) throw new ArgumentNullException("El mensaje no puede ser nulo o estar vacío.");
+
+            view["Pie"].Update(
+                new Panel(new Align(new Markup(msg), HorizontalAlignment.Left))
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Gold1)
+                    .Padding(2, 0, 2, 0)
+                );
+
+            ctx.Refresh();
         }
         #endregion
     }
