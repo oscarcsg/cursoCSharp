@@ -95,7 +95,7 @@ namespace SlotMachine_Ejercicio3_
                 // Pero que le siga devolviendo al jugador sus monedas
 
 
-                // TODO: sería interesante añadir que si la máquina no tiene monedas suficientes, se le quite a otra máquina
+                // TODO: sería interesante añadir que si la máquina no tiene monedas suficientes, se las quite a otra máquina
                 // del mismo tipo para poder pagar la deuda que se podría considerar que tiene el casino.
 
 

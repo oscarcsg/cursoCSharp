@@ -15,14 +15,9 @@ namespace SlotMachine_Ejercicio3_
             new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT),
             new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT)
         };
-        #endregion
 
-        #region MAIN
-        static void Main(string[] args)
-        {
-            Console.OutputEncoding = Encoding.UTF8;
-
-            var view = new Layout("Base")
+        // Layouts de la interfaz
+        private static Layout view = new Layout("Base")
                 .SplitRows(
                     new Layout("Cabecera").Size(3),
                     new Layout("Cuerpo").Size(20).SplitColumns(
@@ -34,6 +29,14 @@ namespace SlotMachine_Ejercicio3_
                     ),
                     new Layout("Pie").Size(3)
                 );
+
+        private static LiveDisplayContext ctx;
+        #endregion
+
+        #region MAIN
+        static void Main(string[] args)
+        {
+            Console.OutputEncoding = Encoding.UTF8;
 
             // HEADER
             view["Cabecera"].Update(
@@ -57,8 +60,9 @@ namespace SlotMachine_Ejercicio3_
             AnsiConsole.AlternateScreen(() =>
             {
                 AnsiConsole.Live(view)
-                .Start(ctx =>
+                .Start(context =>
                 {
+                    ctx = context;
                     bool jugando = true;
 
                     string[] opciones = {
@@ -81,11 +85,11 @@ namespace SlotMachine_Ejercicio3_
                     while (jugando)
                     {
                         // Actualizar los paneles
-                        ConfigurarPanelDecisiones(view, opciones, opcionSeleccionada);
+                        ConfigurarPanelDecisiones(opciones, opcionSeleccionada);
                         
-                        ConfigurarPanelDatos(view, maquinaSeleccionada, jugador);
+                        ConfigurarPanelDatos(maquinaSeleccionada, jugador);
 
-                        ConfigurarPanelMaquina(view);
+                        ConfigurarPanelMaquina();
 
                         // Refrescar la ventana para mostrar los cambios
                         ctx.Refresh();
@@ -111,24 +115,28 @@ namespace SlotMachine_Ejercicio3_
                                 // Cambiar de máquina
                                 case 0:
                                     // Guardar la máquina seleccionada con la que jugar
-                                    maquinaSeleccionada = CambiarMaquina(view, ctx);
+                                    maquinaSeleccionada = CambiarMaquina();
                                     break;
 
                                 // Tirar de la palanca
                                 case 1:
+                                    if (jugador == null) ShowMessageFooter("");
+                                    else if (maquinaSeleccionada == null) ShowMessageFooter("");
+
                                     view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
                                     ctx.Refresh();
                                     Thread.Sleep(1000); // SIMULAR POR AHORA
+                                    maquinaSeleccionada.Play(jugador);
                                     break;
 
                                 // Añadir saldo
                                 case 2:
-                                    AnadirSaldo(view, ctx, jugador);
+                                    AnadirSaldo(jugador);
                                     break;
 
                                 // Cambiar de jugador
                                 case 3:
-                                    jugador = CambiarJugador(view, ctx);
+                                    jugador = CambiarJugador();
                                     break;
 
                                 // Salir del juego
@@ -146,7 +154,7 @@ namespace SlotMachine_Ejercicio3_
 
 
         #region Métodos
-        private static Maquina? CambiarMaquina(Layout view, LiveDisplayContext ctx)
+        private static Maquina? CambiarMaquina()
         {
             // Valor para saber cuál de las máquinas está seleccionada por el jugador
             int opcionSeleccionada = 0;
@@ -205,7 +213,7 @@ namespace SlotMachine_Ejercicio3_
             return maquinaSeleccionada;
         }
 
-        private static Jugador? CambiarJugador(Layout view, LiveDisplayContext ctx)
+        private static Jugador? CambiarJugador()
         {
             bool flag = false;
 
@@ -266,11 +274,11 @@ namespace SlotMachine_Ejercicio3_
             return new Jugador(nombre, int.Parse(saldoStr));
         }
 
-        private static void AnadirSaldo(Layout view, LiveDisplayContext ctx, Jugador? jugador)
+        private static void AnadirSaldo(Jugador? jugador)
         {
             if (jugador == null)
             {
-                ShowMessageFooter(view, ctx, ":warning:  No hay un jugador registrado actualmente.");
+                ShowMessageFooter(":warning:  No hay un jugador registrado actualmente.");
                 return;
             }
 
@@ -330,7 +338,7 @@ namespace SlotMachine_Ejercicio3_
             jugador?._Saldo = monedas;
         }
 
-        private static void ConfigurarPanelDatos(Layout view, Maquina maquinaActual, Jugador jugadorActual)
+        private static void ConfigurarPanelDatos(Maquina maquinaActual, Jugador jugadorActual)
         {
             string nombreJ = "", saldoJ = "0", nombreM = "", slotsM = "0";
 
@@ -364,7 +372,7 @@ namespace SlotMachine_Ejercicio3_
                     .Expand());
         }
 
-        private static void ConfigurarPanelDecisiones(Layout view, string[] deciciones, int opcionSeleccionada)
+        private static void ConfigurarPanelDecisiones(string[] deciciones, int opcionSeleccionada)
         {
             // Crear el texto para el menú con las opciones anteriores
             var lineasMenu = new List<string>();
@@ -390,7 +398,7 @@ namespace SlotMachine_Ejercicio3_
                     .Expand());
         }
 
-        private static void ConfigurarPanelMaquina(Layout view)
+        private static void ConfigurarPanelMaquina()
         {
             view["Maquina"].Update(
                 new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
@@ -400,18 +408,28 @@ namespace SlotMachine_Ejercicio3_
         #endregion
 
         #region Métodos de Utilidad
-        private static void ShowMessageFooter(Layout view, LiveDisplayContext ctx, string? msg)
+        private static void ShowMessageFooter(string? msg)
         {
+            bool flag = false;
+
             if (string.IsNullOrEmpty(msg)) throw new ArgumentNullException("El mensaje no puede ser nulo o estar vacío.");
 
-            view["Pie"].Update(
+            for (byte i = 1; i <= 2; i++)
+            {
+                if (i == 2) msg = "Centro de mensajes.";
+
+                view["Pie"].Update(
                 new Panel(new Align(new Markup(msg), HorizontalAlignment.Left))
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Color.Gold1)
                     .Padding(2, 0, 2, 0)
                 );
 
-            ctx.Refresh();
+                ctx.Refresh();
+
+                // Solo ejecutar la parada en la primera vuelta (en la que muestra el mensaje enviado)
+                if (i != 2) Thread.Sleep(3000); // 3 segundos
+            }
         }
         #endregion
     }
