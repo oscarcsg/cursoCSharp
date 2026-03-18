@@ -1,5 +1,4 @@
 ﻿using Spectre.Console;
-using System.ComponentModel.Design;
 using System.Reflection.Emit;
 using System.Text;
 
@@ -13,8 +12,8 @@ namespace SlotMachine_Ejercicio3_
         // Máquinas
         private static Maquina[] maquinas =
         {
-            new Maquina("👑 Los tres reyes 👑"),
-            new Maquina("♠ Los cinco naipes ♠")
+            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT),
+            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT)
         };
         #endregion
 
@@ -26,7 +25,7 @@ namespace SlotMachine_Ejercicio3_
             var view = new Layout("Base")
                 .SplitRows(
                     new Layout("Cabecera").Size(3),
-                    new Layout("Cuerpo").Size(14).SplitColumns(
+                    new Layout("Cuerpo").Size(20).SplitColumns(
                         new Layout("Maquina").Ratio(6),
                         new Layout("Estadisticas").Ratio(4).SplitRows(
                             new Layout("Datos"),
@@ -70,46 +69,22 @@ namespace SlotMachine_Ejercicio3_
                     };
                     // Por defecto está seleccionada la opcion de cambiar tragaperras
                     int opcionSeleccionada = 2;
-                    Maquina? maquinaSeleccionada = null;
+                    Maquina? maquinaSeleccionada = new("", EMaquina.TRI_SLOT);
                     Jugador? jugador = new("", 0);
 
+
+
+                    // --------------------------------- //
+                    //           BUCLE DE JUEGO          //
+                    // --------------------------------- //
                     while (jugando)
                     {
-                        // Crear el texto para el menú con las opciones anteriores
-                        var lineasMenu = new List<string>();
-                        for (int i = 0; i < opciones.Length; i++)
-                        {
-                            if (i == opcionSeleccionada)
-                            {
-                                // Si es la opción actual, se recalca con un fondo blanco y un >
-                                lineasMenu.Add($"[black on white] > {opciones[i]} [/]");
-                            }
-                            else
-                            {
-                                // Si no, simplemente texto plano
-                                lineasMenu.Add($"   {opciones[i]}");
-                            }
-                        }
-                        string textoMenu = string.Join("\n", lineasMenu);
-
                         // Actualizar los paneles
-                        view["Decisiones"].Update(
-                            new Panel(textoMenu)
-                                .Header("Acciones (Usa las flechas y ENTER)")
-                                .Border(BoxBorder.Rounded)
-                                .Expand());
+                        ConfigurarPanelDecisiones(view, opciones, opcionSeleccionada);
+                        
+                        ConfigurarPanelDatos(view, maquinaSeleccionada, jugador);
 
-                        view["Datos"].Update(
-                            new Panel($"Jugador: {jugador._Nombre}\nSaldo: {jugador._Saldo}")
-                                .Header("Estadísticas")
-                                .Border(BoxBorder.Rounded)
-                                .Expand());
-
-                        view["Maquina"].Update(
-                            new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
-                                .Border(BoxBorder.Rounded)
-                                .Expand()
-                                );
+                        ConfigurarPanelMaquina(view);
 
                         // Refrescar la ventana para mostrar los cambios
                         ctx.Refresh();
@@ -286,6 +261,74 @@ namespace SlotMachine_Ejercicio3_
             }
 
             return new Jugador(nombre, int.Parse(saldoStr));
+        }
+
+        private static void ConfigurarPanelDatos(Layout view, Maquina maquinaActual, Jugador jugadorActual)
+        {
+            string nombreJ = "", saldoJ = "0", nombreM = "", slotsM = "0";
+
+            if (jugadorActual != null && 
+                !string.IsNullOrEmpty(jugadorActual._Nombre))
+            {
+                nombreJ = jugadorActual._Nombre;
+                if (jugadorActual._Saldo <= 0) saldoJ = "0 :warning: No puede jugar:warning:";
+                else saldoJ = jugadorActual._Saldo.ToString();
+            }
+
+            if (maquinaActual != null &&
+                !string.IsNullOrEmpty(maquinaActual._Nombre))
+            {
+                nombreM = maquinaActual._Nombre;
+                slotsM = ((byte)maquinaActual._Slots).ToString();
+            }
+
+            string? txt = $"""
+                Jugador: {nombreJ}
+                Saldo: {saldoJ}
+
+                Máquina seleccionada: {nombreM}
+                Multiplicador: x{slotsM}
+                """;
+
+            view["Datos"].Update(
+                new Panel(txt)
+                    .Header("Estadísticas")
+                    .Border(BoxBorder.Rounded)
+                    .Expand());
+        }
+
+        private static void ConfigurarPanelDecisiones(Layout view, string[] deciciones, int opcionSeleccionada)
+        {
+            // Crear el texto para el menú con las opciones anteriores
+            var lineasMenu = new List<string>();
+            for (int i = 0; i < deciciones.Length; i++)
+            {
+                if (i == opcionSeleccionada)
+                {
+                    // Si es la opción actual, se recalca con un fondo blanco y un >
+                    lineasMenu.Add($"[black on white] > {deciciones[i]} [/]");
+                }
+                else
+                {
+                    // Si no, simplemente texto plano
+                    lineasMenu.Add($"   {deciciones[i]}");
+                }
+            }
+            string textoMenu = string.Join("\n", lineasMenu);
+
+            view["Decisiones"].Update(
+                new Panel(textoMenu)
+                    .Header("Acciones (Usa las flechas y ENTER)")
+                    .Border(BoxBorder.Rounded)
+                    .Expand());
+        }
+
+        private static void ConfigurarPanelMaquina(Layout view)
+        {
+            view["Maquina"].Update(
+                new Panel(new Align(new Markup("Seleccione una acción"), HorizontalAlignment.Center, VerticalAlignment.Top))
+                    .Border(BoxBorder.Rounded)
+                    .Expand());
         }
         #endregion
     }
