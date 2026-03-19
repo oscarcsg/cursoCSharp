@@ -343,7 +343,7 @@ namespace SlotMachine_Ejercicio3_
 
         private static void ConfigurarPanelDatos(Maquina maquinaActual, Jugador jugadorActual)
         {
-            string nombreJ = "", saldoJ = "0", nombreM = "", slotsM = "0";
+            string nombreJ = "", saldoJ = "0", nombreM = "", multiMon = "0", multiProb = "0";
 
             if (jugadorActual != null && 
                 !string.IsNullOrEmpty(jugadorActual._Nombre))
@@ -357,7 +357,8 @@ namespace SlotMachine_Ejercicio3_
                 !string.IsNullOrEmpty(maquinaActual._Nombre))
             {
                 nombreM = maquinaActual._Nombre;
-                slotsM = ((byte)maquinaActual._Slots).ToString();
+                multiMon = (maquinaActual._MultiplicadorPrem).ToString();
+                multiProb = double.Round(maquinaActual._MultiplicadorProb * 100).ToString();
             }
 
             string? txt = $"""
@@ -365,7 +366,8 @@ namespace SlotMachine_Ejercicio3_
                 Saldo: {saldoJ}
 
                 Máquina seleccionada: {nombreM}
-                Multiplicador: x{slotsM}
+                Multiplicador: x{multiMon}
+                Suerte: {multiProb}%
                 """;
 
             view["Datos"].Update(
