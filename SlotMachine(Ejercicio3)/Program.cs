@@ -16,11 +16,11 @@ namespace SlotMachine_Ejercicio3_
         private static Maquina[] maquinas =
         {
             // Máquinas de 3 slots
-            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.6, 1.06),
-            new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.52, 1.15),
+            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.52, 1.06),
+            new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.45, 1.15),
             // Máquinas de 5 slots
-            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.42, 1.34),
-            new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.3, 1.58)
+            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.28, 1.34),
+            new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.14, 1.58)
         };
 
         // Layouts de la interfaz
