@@ -16,11 +16,13 @@
 
 	<Description>Un mini casino interactivo creado en C# usando Spectre.Console.</Description>
 
-	<Version>1.1.0</Version>
+	<Version>1.2.0</Version>
 	<AssemblyVersion>1.0.0.0</AssemblyVersion>
 	<FileVersion>1.0.0.0</FileVersion>
 
 	<Copyright>Copyright © 2026 oscarcsg</Copyright>
+
+	<ApplicationIcon>casino-nuevo-malaga.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

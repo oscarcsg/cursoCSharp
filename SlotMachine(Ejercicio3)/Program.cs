@@ -1,5 +1,4 @@
 ﻿using Spectre.Console;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace SlotMachine_Ejercicio3_
@@ -7,24 +6,24 @@ namespace SlotMachine_Ejercicio3_
     internal class Program
     {
         #region Atributos
-        private const int WIDTH = 100;
+        private const int _WIDTH = 100;
 
         public static bool GirarLibre { get; set; } = true;
 
         // Máquinas
         // Para que ganar no sea ultra complejo, voy a poner los multiplicadores alto
-        private static Maquina[] maquinas =
-        {
+        private static readonly Maquina[] _maquinas =
+        [
             // Máquinas de 3 slots
             new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.52, 1.06),
             new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.45, 1.15),
             // Máquinas de 5 slots
             new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.28, 1.34),
             new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.14, 1.58)
-        };
+        ];
 
         // Layouts de la interfaz
-        private static Layout view = new Layout("Base")
+        private static readonly Layout _view = new Layout("Base")
                 .SplitRows(
                     new Layout("Cabecera").Size(3),
                     new Layout("Cuerpo").Size(20).SplitColumns(
@@ -47,25 +46,25 @@ namespace SlotMachine_Ejercicio3_
             Console.Clear();
 
             // HEADER
-            view["Cabecera"].Update(
+            _view["Cabecera"].Update(
                 new Panel(new Align(new Markup("[bold gold1] 🎰 CASINO NUEVO MÁLAGA 🎰 [/]"), HorizontalAlignment.Center))
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Color.Gold1)
                 );
 
             // FOOTER
-            view["Pie"].Update(
+            _view["Pie"].Update(
                 new Panel(new Align(new Markup("Texto Prueba"), HorizontalAlignment.Left))
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Color.Gold1)
                     .Padding(2, 0 ,2, 0)
                 );
 
-            view["Maquina"].Update(new Panel("").Expand());
-            view["Datos"].Update(new Panel("").Expand());
-            view["Decisiones"].Update(new Panel("").Expand());
+            _view["Maquina"].Update(new Panel("").Expand());
+            _view["Datos"].Update(new Panel("").Expand());
+            _view["Decisiones"].Update(new Panel("").Expand());
 
-            await AnsiConsole.Live(view)
+            await AnsiConsole.Live(_view)
                     .StartAsync(async context =>
                     {
                         ctx = context;
@@ -167,31 +166,33 @@ namespace SlotMachine_Ejercicio3_
             while (!flag)
             {
                 // Texto con todas las máquinas
-                var lineasMaquinas = new List<string>();
-                lineasMaquinas.Add("[yellow]¿A qué máquina quieres jugar?[/]\n");
-                for (int i = 0; i < maquinas.Length; i++)
+                var lineasMaquinas = new List<string>
+                {
+                    "[yellow]¿A qué máquina quieres jugar?[/]\n"
+                };
+                for (int i = 0; i < _maquinas.Length; i++)
                 {
                     if (i == opcionSeleccionada)
                     {
                         // Si es la opción actual, se recalca con un fondo blanco y un >
-                        lineasMaquinas.Add($"[black on white] > {maquinas[i]._Nombre} [/]");
+                        lineasMaquinas.Add($"[black on white] > {_maquinas[i].Nombre} [/]");
                     }
                     else
                     {
                         // Si no, texto plano
-                        lineasMaquinas.Add($"   {maquinas[i]._Nombre}");
+                        lineasMaquinas.Add($"   {_maquinas[i].Nombre}");
                     }
                 }
 
                 string maquinasTxt = string.Join("\n", lineasMaquinas);
 
                 // Cambiar el panel para mostrar las máquinas que se pueden seleccionar
-                view["Maquina"].Update(
+                _view["Maquina"].Update(
                     new Panel(new Align(new Markup(maquinasTxt), HorizontalAlignment.Center, VerticalAlignment.Top))
                         .Border(BoxBorder.Rounded)
                         .Expand());
 
-                ctx.Refresh();
+                ctx?.Refresh();
 
                 var tecla = Console.ReadKey(intercept: true).Key;
 
@@ -203,13 +204,13 @@ namespace SlotMachine_Ejercicio3_
                 else if (tecla == ConsoleKey.DownArrow)
                 {
                     // Bajar en el panel, siempre dentro de las opciones de las maquinas
-                    if (opcionSeleccionada < maquinas.Length - 1) opcionSeleccionada++;
+                    if (opcionSeleccionada < _maquinas.Length - 1) opcionSeleccionada++;
                 }
                 else if (tecla == ConsoleKey.Enter)
                 {
                     flag = true;
                     // Seleccionar la máquina actual
-                    maquinaSeleccionada = maquinas[opcionSeleccionada];
+                    maquinaSeleccionada = _maquinas[opcionSeleccionada];
                 }
             }
             // Devolver la máquina seleccionada
@@ -231,23 +232,24 @@ namespace SlotMachine_Ejercicio3_
                 if (!isNombre) msg = $"Escribe tu nombre de jugador (enter para enviar):\n{nombre}";
                 else msg = $"Escribe cuánto saldo quieres tener: {saldo}";
 
-                view["Maquina"].Update(
+                _view["Maquina"].Update(
                     new Panel(new Align(new Markup(msg), HorizontalAlignment.Center, VerticalAlignment.Top))
                         .Border(BoxBorder.Rounded)
                         .Expand());
 
-                ctx.Refresh();
+                ctx?.Refresh();
 
                 var tecla = Console.ReadKey(intercept: true);
                 var key = tecla.Key;
                 char c = tecla.KeyChar;
 
-                if (key == ConsoleKey.Backspace && nombre.Length > 0 && saldoStr.Length > 0)
+                if (key == ConsoleKey.Backspace && nombre?.Length > 0 && saldoStr.Length > 0)
                 {
                     if (!isNombre) nombre = nombre.Remove(nombre.Length - 1);
                     else
                     {
-                        saldoStr = saldoStr.Remove(saldoStr.Length - 1);
+                        // Esto elimina el último elemento (último caracter del string)
+                        saldoStr = saldoStr[..^1];
                         if (saldoStr.Length == 0) saldo = 0;
                         else saldo = int.Parse(saldoStr);
                     }
@@ -288,7 +290,7 @@ namespace SlotMachine_Ejercicio3_
             bool flag = false,
                  good = true;
 
-            int monedas = jugador._Saldo;
+            int monedas = jugador.Saldo;
             string monedasStr = "0";
 
             while (!flag)
@@ -297,12 +299,12 @@ namespace SlotMachine_Ejercicio3_
                 if (good) msg = $"¿Cuánto dinero quiere meter en su cuenta?\nCantidad: {monedasStr} monedas";
                 else msg = $"No es posible, pruebe con otra cantidad.\nCantidad: {monedasStr} monedas";
 
-                view["Maquina"].Update(
+                _view["Maquina"].Update(
                     new Panel(new Align(new Markup(msg), HorizontalAlignment.Center, VerticalAlignment.Top))
                         .Border(BoxBorder.Rounded)
                         .Expand());
 
-                ctx.Refresh();
+                ctx?.Refresh();
 
                 var tecla = Console.ReadKey(intercept: true);
                 var key = tecla.Key;
@@ -310,7 +312,7 @@ namespace SlotMachine_Ejercicio3_
 
                 if (key == ConsoleKey.Backspace && monedasStr.Length > 0)
                 {
-                    monedasStr = monedasStr.Remove(monedasStr.Length -1);
+                    monedasStr = monedasStr[..^1];
                 }
                 else if (key == ConsoleKey.Enter) {
                     if (!string.IsNullOrEmpty(monedasStr) && int.Parse(monedasStr) > 0)
@@ -321,7 +323,7 @@ namespace SlotMachine_Ejercicio3_
                 }
                 else if (char.IsDigit(c))
                 {
-                    if (monedasStr.IndexOf("0") == 0)
+                    if (monedasStr.StartsWith('0'))
                     {
                         monedasStr = "";
                     }
@@ -338,7 +340,7 @@ namespace SlotMachine_Ejercicio3_
                 }
             }
 
-            jugador?._Saldo = monedas;
+            jugador?.Saldo = monedas;
         }
 
         private static void ConfigurarPanelDatos(Maquina maquinaActual, Jugador jugadorActual)
@@ -346,19 +348,19 @@ namespace SlotMachine_Ejercicio3_
             string nombreJ = "", saldoJ = "0", nombreM = "", multiMon = "0", multiProb = "0";
 
             if (jugadorActual != null && 
-                !string.IsNullOrEmpty(jugadorActual._Nombre))
+                !string.IsNullOrEmpty(jugadorActual.Nombre))
             {
-                nombreJ = jugadorActual._Nombre;
-                if (jugadorActual._Saldo <= 0) saldoJ = "0 :warning: No puede jugar:warning:";
-                else saldoJ = jugadorActual._Saldo.ToString();
+                nombreJ = jugadorActual.Nombre;
+                if (jugadorActual.Saldo <= 0) saldoJ = "0 :warning: No puede jugar:warning:";
+                else saldoJ = jugadorActual.Saldo.ToString();
             }
 
             if (maquinaActual != null &&
-                !string.IsNullOrEmpty(maquinaActual._Nombre))
+                !string.IsNullOrEmpty(maquinaActual.Nombre))
             {
-                nombreM = maquinaActual._Nombre;
-                multiMon = (maquinaActual._MultiplicadorPrem).ToString();
-                multiProb = double.Round(maquinaActual._MultiplicadorProb * 100).ToString();
+                nombreM = maquinaActual.Nombre;
+                multiMon = (maquinaActual.MultiplicadorPrem).ToString();
+                multiProb = double.Round(maquinaActual.MultiplicadorProb * 100).ToString();
             }
 
             string? txt = $"""
@@ -370,7 +372,7 @@ namespace SlotMachine_Ejercicio3_
                 Suerte: {multiProb}%
                 """;
 
-            view["Datos"].Update(
+            _view["Datos"].Update(
                 new Panel(txt)
                     .Header("Estadísticas")
                     .Border(BoxBorder.Rounded)
@@ -396,7 +398,7 @@ namespace SlotMachine_Ejercicio3_
             }
             string textoMenu = string.Join("\n", lineasMenu);
 
-            view["Decisiones"].Update(
+            _view["Decisiones"].Update(
                 new Panel(textoMenu)
                     .Header("Acciones (Usa las flechas y ENTER)")
                     .Border(BoxBorder.Rounded)
@@ -405,7 +407,7 @@ namespace SlotMachine_Ejercicio3_
 
         private static void ConfigurarPanelMaquina()
         {
-            view["Maquina"].Update(
+            _view["Maquina"].Update(
                 new Panel(new Align(new Markup("Seleccione una acción\nO pulse 'Espacio' para tirar rápidamente"), HorizontalAlignment.Center, VerticalAlignment.Top))
                     .Border(BoxBorder.Rounded)
                     .Expand());
@@ -429,8 +431,8 @@ namespace SlotMachine_Ejercicio3_
             }
 
             girarLibre = false;
-            view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
-            ctx.Refresh();
+            _view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
+            ctx?.Refresh();
             await maquinaSeleccionada.Play(jugador);
         }
         #endregion
@@ -446,14 +448,14 @@ namespace SlotMachine_Ejercicio3_
             {
                 if (i == 2) msg = "Centro de mensajes.";
 
-                view["Pie"].Update(
+                _view["Pie"].Update(
                 new Panel(new Align(new Markup(msg), HorizontalAlignment.Left))
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Color.Gold1)
                     .Padding(2, 0, 2, 0)
                 );
 
-                ctx.Refresh();
+                ctx?.Refresh();
 
                 // Solo ejecutar la parada en la primera vuelta (en la que muestra el mensaje enviado)
                 if (i != 2) await Task.Delay(1000); // 1 segundos
