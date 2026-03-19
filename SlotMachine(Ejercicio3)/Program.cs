@@ -9,18 +9,18 @@ namespace SlotMachine_Ejercicio3_
         #region Atributos
         private const int WIDTH = 100;
 
-        public static bool _GirarLibre { get; set; } = true;
+        public static bool GirarLibre { get; set; } = true;
 
         // Máquinas
         // Para que ganar no sea ultra complejo, voy a poner los multiplicadores alto
         private static Maquina[] maquinas =
         {
             // Máquinas de 3 slots
-            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.82, 1.1),
-            new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.75, 1.2),
+            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.6, 1.06),
+            new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.52, 1.15),
             // Máquinas de 5 slots
-            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.7, 1.5),
-            new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.62, 1.8)
+            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.42, 1.34),
+            new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.3, 1.58)
         };
 
         // Layouts de la interfaz
@@ -115,7 +115,7 @@ namespace SlotMachine_Ejercicio3_
                             }
                             else if (tecla == ConsoleKey.Spacebar)
                             {
-                                _ = TirarPalanca(_GirarLibre, jugador, maquinaSeleccionada);
+                                _ = TirarPalanca(GirarLibre, jugador, maquinaSeleccionada);
                             }
                             else if (tecla == ConsoleKey.Enter)
                             {
@@ -130,7 +130,7 @@ namespace SlotMachine_Ejercicio3_
 
                                     // Tirar de la palanca
                                     case 1:
-                                        _ = TirarPalanca(_GirarLibre, jugador, maquinaSeleccionada);
+                                        _ = TirarPalanca(GirarLibre, jugador, maquinaSeleccionada);
                                         break;
 
                                     // Añadir saldo
@@ -438,7 +438,7 @@ namespace SlotMachine_Ejercicio3_
         {
             if (string.IsNullOrEmpty(msg)) throw new ArgumentNullException("El mensaje no puede ser nulo o estar vacío.");
 
-            _GirarLibre = false;
+            GirarLibre = false;
 
             for (byte i = 1; i <= 2; i++)
             {
@@ -457,7 +457,7 @@ namespace SlotMachine_Ejercicio3_
                 if (i != 2) await Task.Delay(1000); // 1 segundos
             }
 
-            _GirarLibre = true;
+            GirarLibre = true;
         }
         #endregion
     }

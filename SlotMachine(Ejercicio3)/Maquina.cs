@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Text;
 
 namespace SlotMachine_Ejercicio3_
@@ -10,6 +11,7 @@ namespace SlotMachine_Ejercicio3_
         TRI_SLOT = 3,
         FIVE_SLOT = 5
     }
+
     public class Maquina
     {
         #region Atributos
@@ -22,9 +24,23 @@ namespace SlotMachine_Ejercicio3_
         // Multiplicador de probabilidad de ganar de la máquina
         public double _MultiplicadorProb { get; }
         // Multiplicador de premio
-        public double _MultiplicadorPrem { get; }
+        public double _MultiplicadorPrem { get; private set; }
         // Estado. Si tiene monedas está operativa, sino no
         public bool _Operativa { get; set; } = true;
+
+
+
+        public Dictionary<byte, string?> Simbolos = new Dictionary<byte, string?>
+        {
+            { 1, "🍒" },
+            { 2, "🍇" },
+            { 3, "🍓" },
+            { 4, "🔔" },
+            { 5, "👑" },
+            { 6, "🐉" },
+            { 7, "💰" },
+            { 8, "💎" },
+        };
         #endregion
 
 
@@ -53,22 +69,41 @@ namespace SlotMachine_Ejercicio3_
         #region Métodos
         public async Task Play(Jugador player)
         {
+            Dictionary<byte, byte> results = [];
             byte size = (byte)this._Slots;
-            byte count = 0;
 
             if (player._Saldo >= size) RecalcularSaldo(player, size, false); // Retirar las monedas del precio de la máquina
-            else await Program.ShowMessageFooter("💸 No tienes saldo suficiente.");
-
-            // Tirar suerte
-            for (byte i = 0; i < size; i++)
+            else
             {
-                if (RandomExtension.NextBool(Random.Shared) == true) count++;
+                await Program.ShowMessageFooter("💸 No tienes saldo suficiente.");
+                return;
             }
 
-            if (count == size || count == 0)
+            // Tirar suerte
+            byte[] simbols = TirarSuerte(size);
+            foreach (byte b in simbols)
             {
+                if (results.ContainsKey(b)) results[b]++;
+                else results.Add(b, 1);
+            }
+
+
+
+            // Comprobar resultados
+            if (results.ContainsValue(5))
+            {
+                _MultiplicadorPrem += 0.5;
                 byte monedas = CalcularMonedas();
                 RecalcularSaldo(player, monedas, true); // Ingresas las ganancias (el precio de la máquina más los intereses
+                _MultiplicadorPrem -= 0.5;
+                await Program.ShowMessageFooter($"💰 ¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas 💰");
+            }
+            else if (results.ContainsValue(3))
+            {
+                _MultiplicadorPrem += 0.3;
+                byte monedas = CalcularMonedas();
+                RecalcularSaldo(player, monedas, true); // Ingresas las ganancias (el precio de la máquina más los intereses
+                _MultiplicadorPrem -= 0.3;
                 await Program.ShowMessageFooter($"💰 ¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas 💰");
             }
             else await Program.ShowMessageFooter($"Lo sentimos, ha perdido {size} monedas");
@@ -121,6 +156,31 @@ namespace SlotMachine_Ejercicio3_
                 player._Saldo -= monedas;
                 this._Monedas += monedas;
             }
+        }
+
+        private byte[] TirarSuerte(byte size)
+        {
+            byte[] values = new byte[size];
+
+            // Calcular el primer simbolo
+            values[0] = (byte)Random.Shared.Next(1, 9);
+
+            for (int i = 1; i < size; i++)
+            {
+                // Ej. Hay un 0.8 (80%) de probabilidad de suerte
+                // osea que hay 80 posibles numeros para sacar el mismo valor
+                if (Random.Shared.NextDouble() <= _MultiplicadorProb)
+                {
+                    // Si ha tenido SUERTE, entonces sale el mismo simbolo de la rueda anterior
+                    values[i] = values[i - 1];
+                }
+                else
+                {
+                    values[i] = (byte)Random.Shared.Next(1, 9);
+                }
+            }
+
+            return values;
         }
         #endregion
     }
