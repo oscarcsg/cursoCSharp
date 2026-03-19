@@ -45,13 +45,13 @@ namespace SlotMachine_Ejercicio3_
 
 
         #region Métodos
-        public async Task<bool> Play(Jugador player)
+        public async Task Play(Jugador player)
         {
             byte size = (byte)this._Slots;
             byte count = 0;
 
             if (player._Saldo >= size) RecalcularSaldo(player, size, false); // Retirar las monedas del precio de la máquina
-            else return await Program.ShowMessageFooter("💸 No tienes saldo suficiente.");
+            else await Program.ShowMessageFooter("💸 No tienes saldo suficiente.");
 
             // Tirar suerte
             for (byte i = 0; i < size; i++)
@@ -63,14 +63,14 @@ namespace SlotMachine_Ejercicio3_
             {
                 byte monedas = CalcularMonedas();
                 RecalcularSaldo(player, monedas, true); // Ingresas las ganancias (el precio de la máquina más los intereses
-                return await Program.ShowMessageFooter($"💰 ¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas 💰");
+                await Program.ShowMessageFooter($"💰 ¡¡¡ENHORABUENA!!! Has ganado {monedas} monedas 💰");
             }
-            else return await Program.ShowMessageFooter($"Lo sentimos, ha perdido {size} monedas");
+            else await Program.ShowMessageFooter($"Lo sentimos, ha perdido {size} monedas");
         }
 
         private byte CalcularMonedas()
         {
-            double multiplicadorAleatorio = Random.Shared.NextDouble() * 3;
+            double multiplicadorAleatorio = Random.Shared.NextDouble() * (byte)this._Slots;
 
             byte monedasBase = (byte)this._Slots;
 

@@ -1,4 +1,5 @@
 ﻿using Spectre.Console;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace SlotMachine_Ejercicio3_
@@ -7,6 +8,8 @@ namespace SlotMachine_Ejercicio3_
     {
         #region Atributos
         private const int WIDTH = 100;
+
+        public static bool _GirarLibre { get; set; } = true;
 
         // Máquinas
         private static Maquina[] maquinas =
@@ -61,7 +64,7 @@ namespace SlotMachine_Ejercicio3_
                     .StartAsync(async context =>
                     {
                         ctx = context;
-                        bool jugando = true, girarLibre = true;
+                        bool jugando = true;
 
                         string[] opciones = {
                             "🔀 Cambiar de tragaperras",
@@ -107,7 +110,7 @@ namespace SlotMachine_Ejercicio3_
                             }
                             else if (tecla == ConsoleKey.Spacebar)
                             {
-                                _ = TirarPalanca(girarLibre, jugador, maquinaSeleccionada);
+                                _ = TirarPalanca(_GirarLibre, jugador, maquinaSeleccionada);
                             }
                             else if (tecla == ConsoleKey.Enter)
                             {
@@ -122,7 +125,7 @@ namespace SlotMachine_Ejercicio3_
 
                                     // Tirar de la palanca
                                     case 1:
-                                        _ = TirarPalanca(girarLibre, jugador, maquinaSeleccionada);
+                                        _ = TirarPalanca(_GirarLibre, jugador, maquinaSeleccionada);
                                         break;
 
                                     // Añadir saldo
@@ -421,14 +424,16 @@ namespace SlotMachine_Ejercicio3_
             girarLibre = false;
             view["Decisiones"].Update(new Panel("[yellow]¡Girando rodillos!...[/]").Expand());
             ctx.Refresh();
-            girarLibre = await maquinaSeleccionada.Play(jugador);
+            await maquinaSeleccionada.Play(jugador);
         }
         #endregion
 
         #region Métodos de Utilidad
-        public static async Task<bool> ShowMessageFooter(string? msg)
+        public static async Task ShowMessageFooter(string? msg)
         {
             if (string.IsNullOrEmpty(msg)) throw new ArgumentNullException("El mensaje no puede ser nulo o estar vacío.");
+
+            _GirarLibre = false;
 
             for (byte i = 1; i <= 2; i++)
             {
@@ -444,10 +449,10 @@ namespace SlotMachine_Ejercicio3_
                 ctx.Refresh();
 
                 // Solo ejecutar la parada en la primera vuelta (en la que muestra el mensaje enviado)
-                if (i != 2) await Task.Delay(3000); // 3 segundos
+                if (i != 2) await Task.Delay(2000); // 2 segundos
             }
 
-            return true;
+            _GirarLibre = true;
         }
         #endregion
     }
