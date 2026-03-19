@@ -19,6 +19,10 @@ namespace SlotMachine_Ejercicio3_
         public int _Monedas { get; private set; } = 1000;
         // Definir el número de slots que tiene la máquina mediante el enum
         public EMaquina _Slots { get; } = EMaquina.TRI_SLOT; // Por defecto tienen 3 slots
+        // Multiplicador de probabilidad de ganar de la máquina
+        public double _MultiplicadorProb { get; }
+        // Multiplicador de premio
+        public double _MultiplicadorPrem { get; }
         // Estado. Si tiene monedas está operativa, sino no
         public bool _Operativa { get; set; } = true;
         #endregion
@@ -26,19 +30,21 @@ namespace SlotMachine_Ejercicio3_
 
 
         #region Constructores
-        public Maquina()
+        private Maquina()
         {
             _Nombre = "Máquina Tragaperras";
         }
 
-        public Maquina(string nombre)
+        private Maquina(string nombre)
         {
             _Nombre = nombre;
         }
 
-        public Maquina(string nombre, EMaquina slots) : this(nombre)
+        public Maquina(string nombre, EMaquina slots, double multiProb, double multiPrem) : this(nombre)
         {
             _Slots = slots;
+            _MultiplicadorProb = multiProb;
+            _MultiplicadorPrem = multiPrem;
         }
         #endregion
 
@@ -75,7 +81,7 @@ namespace SlotMachine_Ejercicio3_
             byte monedasBase = (byte)this._Slots;
 
             // Redondear hacia arriba, es decir, que si el cálculo sale 3.6, se devuelvan 4 monedas (o eso debería pasar)
-            byte ganancia = (byte)(monedasBase + (byte)Math.Ceiling(monedasBase * multiplicadorAleatorio));
+            byte ganancia = (byte)(monedasBase + (byte)Math.Ceiling(monedasBase * multiplicadorAleatorio) * this._MultiplicadorPrem);
 
             return ganancia;
         }

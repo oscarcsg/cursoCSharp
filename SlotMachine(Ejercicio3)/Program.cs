@@ -12,10 +12,15 @@ namespace SlotMachine_Ejercicio3_
         public static bool _GirarLibre { get; set; } = true;
 
         // Máquinas
+        // Para que ganar no sea ultra complejo, voy a poner los multiplicadores alto
         private static Maquina[] maquinas =
         {
-            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT),
-            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT)
+            // Máquinas de 3 slots
+            new Maquina("👑 Los tres reyes 👑", EMaquina.TRI_SLOT, 0.82, 1.1),
+            new Maquina("🍒 Las tres cerezas 🍒", EMaquina.TRI_SLOT, 0.75, 1.2),
+            // Máquinas de 5 slots
+            new Maquina("♠ Los cinco naipes ♠", EMaquina.FIVE_SLOT, 0.7, 1.5),
+            new Maquina("🎰 Los cinco sietes 🎰", EMaquina.FIVE_SLOT, 0.62, 1.8)
         };
 
         // Layouts de la interfaz
@@ -449,7 +454,7 @@ namespace SlotMachine_Ejercicio3_
                 ctx.Refresh();
 
                 // Solo ejecutar la parada en la primera vuelta (en la que muestra el mensaje enviado)
-                if (i != 2) await Task.Delay(2000); // 2 segundos
+                if (i != 2) await Task.Delay(1000); // 1 segundos
             }
 
             _GirarLibre = true;
